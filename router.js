@@ -2,13 +2,23 @@
   window.nextStep = window.nextStep || null;
   window.isNavigating = false;
 
+  function triggerStepEnter() {
+    document.documentElement.classList.remove('quiz-step-entering');
+    requestAnimationFrame(() => {
+      document.documentElement.classList.add('quiz-step-entering');
+      setTimeout(() => {
+        document.documentElement.classList.remove('quiz-step-entering');
+      }, 380);
+    });
+  }
+
   function ensureLoadingStyles() {
     if (document.querySelector('link[href$="shared.css"]') || document.getElementById('quiz-shared-loading-style')) return;
     const style = document.createElement('style');
     style.id = 'quiz-shared-loading-style';
     style.textContent = `
       .quiz-loading-shell { min-height: 100vh; width: 100%; display: flex; align-items: flex-start; justify-content: center; padding: clamp(34px, 7vh, 74px) 18px 48px; background: radial-gradient(circle at 12% 88%, rgba(126, 181, 49, .24), transparent 26%), radial-gradient(circle at 100% 50%, rgba(137, 190, 54, .16), transparent 34%), linear-gradient(180deg, #ffffff 0%, #f8fbf4 100%); overflow: hidden; }
-      .quiz-loading-card { position: relative; width: min(560px, calc(100vw - 36px)); min-height: min(700px, calc(100vh - 76px)); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(34px, 5.5vw, 60px) clamp(28px, 6vw, 72px); text-align: center; color: #082a12; border-radius: 42px; background: rgba(255,255,255,.94); box-shadow: 0 24px 70px rgba(20,59,24,.12); overflow: hidden; }
+      .quiz-loading-card { position: relative; width: min(560px, calc(100vw - 36px)); min-height: min(700px, calc(100vh - 76px)); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(34px, 5.5vw, 60px) clamp(28px, 6vw, 72px); text-align: center; color: #082a12; border-radius: 42px; background: rgba(255,255,255,.94); box-shadow: 0 24px 70px rgba(20,59,24,.12); overflow: hidden; animation: quizCardFloat 1s cubic-bezier(.18,.84,.24,1) both; }
       .quiz-loading-card:before { content: ""; position: absolute; inset: 0; border-top: 8px solid #8fbd31; border-radius: inherit; pointer-events: none; box-shadow: inset 0 1px 0 rgba(9,79,25,.28); }
       .quiz-loading-card:after { content: ""; position: absolute; left: -8%; right: -8%; bottom: -8%; height: 22%; border-radius: 50% 50% 0 0; background: rgba(143,189,49,.10); transform: rotate(-5deg); pointer-events: none; }
       .quiz-loading-title { position: relative; z-index: 1; margin: 0; font-size: clamp(44px, 9.2vw, 96px); line-height: .98; font-weight: 900; letter-spacing: 0; color: #06350f; text-shadow: 0 7px 22px rgba(11,73,24,.12); }
@@ -18,12 +28,13 @@
       .quiz-loading-copy { position: relative; z-index: 1; margin: 0; max-width: 520px; font-size: clamp(22px, 4vw, 34px); line-height: 1.32; font-weight: 500; color: #303841; }
       .quiz-loading-icon { position: relative; z-index: 1; width: clamp(66px, 9vw, 84px); height: clamp(66px, 9vw, 84px); margin: clamp(20px, 3vw, 28px) auto 18px; border-radius: 50%; background: #eef5df; display: flex; align-items: center; justify-content: center; color: #557b22; animation: quizLoadingPulse 1.45s ease-in-out infinite; }
       .quiz-loading-icon svg { width: 58%; height: 58%; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-      .quiz-loading-percent { position: relative; z-index: 1; margin: 0 0 22px; font-size: clamp(34px, 6vw, 52px); line-height: 1; font-weight: 900; color: #4b7922; }
+      .quiz-loading-percent { position: relative; z-index: 1; margin: 0 0 22px; font-size: clamp(34px, 6vw, 52px); line-height: 1; font-weight: 900; color: #4b7922; transition: transform .2s ease, opacity .2s ease; }
       .quiz-loading-bar { position: relative; z-index: 1; width: min(520px, 100%); height: 26px; border-radius: 999px; background: #edf2df; overflow: hidden; box-shadow: inset 0 1px 2px rgba(4,44,12,.06); }
-      .quiz-loading-fill { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4a9e24 0%, #9bd629 100%); box-shadow: 0 0 22px rgba(119,183,35,.35); transition: width .08s linear; }
+      .quiz-loading-fill { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4a9e24 0%, #9bd629 100%); box-shadow: 0 0 22px rgba(119,183,35,.35); transition: width .22s cubic-bezier(.22,.61,.36,1); }
       .quiz-loading-safe { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: clamp(28px, 5vw, 48px); color: #66706d; font-size: clamp(16px, 3vw, 22px); }
       .quiz-loading-safe svg { width: 30px; height: 30px; stroke: #557b22; fill: none; stroke-width: 2; }
       @keyframes quizLoadingPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(143,189,49,.18); } 50% { transform: scale(1.04); box-shadow: 0 0 0 18px rgba(143,189,49,0); } }
+      @keyframes quizCardFloat { from { opacity: 0; transform: translate3d(0,24px,0) scale(.985); } to { opacity: 1; transform: translate3d(0,0,0) scale(1); } }
       @media (max-width: 520px) {
         .quiz-loading-shell { padding: 30px 12px 34px; }
         .quiz-loading-card { min-height: calc(100vh - 64px); border-radius: 28px; padding: 42px 24px; }
@@ -67,10 +78,31 @@
 </main>`;
   }
 
+  function findStepScript(doc) {
+    var scripts = Array.prototype.slice.call(doc.querySelectorAll('script'));
+    return scripts.find(function (script) {
+      var code = script.textContent || '';
+      return code.indexOf('wireClicks()') !== -1 && code.indexOf('window.enhanceCards') !== -1;
+    }) || null;
+  }
+
+  function runStepScript(doc) {
+    var stepScript = findStepScript(doc);
+    if (!stepScript) return false;
+    try {
+      new Function(stepScript.textContent || '')();
+      return true;
+    } catch (error) {
+      console.error('Step script execution error:', error);
+      return false;
+    }
+  }
+
   window.spaGoToNext = async function(targetStep) {
     targetStep = targetStep || window.nextStep;
     if (window.isNavigating || !targetStep) return;
     window.nextStep = targetStep;
+    var currentStepPath = targetStep;
 
     window.isNavigating = true;
     document.documentElement.classList.add('quiz-step-exiting');
@@ -82,6 +114,7 @@
       const doc = parser.parseFromString(html, 'text/html');
 
       const newMain = doc.querySelector('main');
+      let didRunStepScript = false;
       if (newMain) {
         const progressNum = doc.querySelector('#quiz-progress-number');
         const isFixedLoading = newMain.innerHTML.includes('Estamos analisando suas respostas...');
@@ -97,6 +130,8 @@
 
           ensureLoadingStyles();
           document.querySelector('main').outerHTML = createLoadingMarkup(pct);
+          history.pushState(null, '', currentStepPath);
+          triggerStepEnter();
 
           const scripts = doc.querySelectorAll('script');
           let foundNext = false;
@@ -119,7 +154,13 @@
             currentPct += Math.random() * 15;
             if (currentPct > targetPct) currentPct = targetPct;
             if (fill) fill.style.width = currentPct + '%';
-            if (txt) txt.textContent = Math.floor(currentPct) + '%';
+            if (txt) {
+              txt.textContent = Math.floor(currentPct) + '%';
+              txt.style.transform = 'scale(1.035)';
+              setTimeout(() => {
+                txt.style.transform = 'scale(1)';
+              }, 120);
+            }
             if (currentPct >= targetPct) {
               clearInterval(interval);
               setTimeout(() => {
@@ -132,6 +173,9 @@
         }
 
         document.querySelector('main').replaceWith(newMain);
+        history.pushState(null, '', currentStepPath);
+        triggerStepEnter();
+        didRunStepScript = runStepScript(doc);
       }
 
       const scripts = doc.querySelectorAll('script');
@@ -146,13 +190,14 @@
       }
       if (!foundNext) window.nextStep = null;
 
-      if (typeof window.enhanceCards === 'function') window.enhanceCards();
-      if (typeof window.enhanceBodyMap === 'function') window.enhanceBodyMap();
-      if (typeof window.enhanceRuler === 'function') window.enhanceRuler();
-      if (typeof window.decorateComparisonChoice === 'function') window.decorateComparisonChoice();
-      if (typeof window.animateBmiCircle === 'function') window.animateBmiCircle();
+      if (!didRunStepScript) {
+        if (typeof window.enhanceCards === 'function') window.enhanceCards();
+        if (typeof window.enhanceBodyMap === 'function') window.enhanceBodyMap();
+        if (typeof window.enhanceRuler === 'function') window.enhanceRuler();
+        if (typeof window.decorateComparisonChoice === 'function') window.decorateComparisonChoice();
+        if (typeof window.animateBmiCircle === 'function') window.animateBmiCircle();
+      }
 
-      history.pushState(null, '', '/' + window.nextStep);
       window.scrollTo(0, 0);
       window.isNavigating = false;
       document.documentElement.classList.remove('quiz-step-exiting');

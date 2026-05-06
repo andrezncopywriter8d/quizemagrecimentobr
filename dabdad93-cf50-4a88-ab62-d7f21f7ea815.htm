@@ -9,7 +9,12 @@
   var nextStep = 'fcfbbf00-3720-4cd7-a4db-6781a769c01b.htm';
   var autoAdvance = false;
   var isNavigating = false;
-  var pathname = (location.pathname || '').toLowerCase();
+  if (window.quizStepAbortController) window.quizStepAbortController.abort();
+  var interactionController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  window.quizStepAbortController = interactionController;
+  var clickListenerOptions = interactionController ? { capture: true, signal: interactionController.signal } : true;
+  var resizeListenerOptions = interactionController ? { signal: interactionController.signal } : false;
+  function getPathname() { return (location.pathname || '').toLowerCase(); }
   var auxiliaryLabels = ['kg', 'lb', 'cm', 'pol', 'proximo', 'prÃ³ximo', 'prÃ£Â³ximo'];
   var advanceLabels = ['continuar', 'enviar', 'pegar minha receita', 'tambem quero essa transformacao', 'tambÃ©m quero essa transformaÃ§Ã£o', 'tambÃ£Â©m quero essa transformaÃ£Â§Ã£Â£o', 'sim, quero comeÃ§ar agora', 'sim, quero comeÃ£Â§ar agora', 'pegar meu plano'];
 
@@ -76,7 +81,7 @@
     button.classList.toggle('quiz-option-selected', selected);
     button.setAttribute('aria-pressed', selected ? 'true' : 'false');
     if (selected) sessionStorage.setItem('quizLastOption', (button.innerText || button.textContent || '').trim());
-    if (/61e360b3/.test(pathname) && selected) sessionStorage.setItem('quizDream', (button.innerText || button.textContent || '').trim());
+    if (/61e360b3/.test(getPathname()) && selected) sessionStorage.setItem('quizDream', (button.innerText || button.textContent || '').trim());
     if (!card) return;
     circleCandidates(card).forEach(function (circle) { circle.classList.toggle('quiz-radio-selected', selected); });
   }
@@ -104,7 +109,7 @@
   }
 
   function enhanceBodyMap() {
-    if (!/6937ce8b/.test(pathname)) return;
+    if (!/6937ce8b/.test(getPathname())) return;
     var labels = ['BraÃ§os', 'BraÃ£Â§os', 'Barriga', 'Costas', 'Pochete', 'Culotes', 'Flanco', 'Coxa', 'Pernas'];
     var selected = new Set(JSON.parse(sessionStorage.getItem('quizParts') || '[]'));
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
@@ -144,7 +149,7 @@
     var hasWeight = buttons.some(function (b) { return getButtonText(b) === 'kg'; }) && buttons.some(function (b) { return getButtonText(b) === 'lb'; });
     var hasHeight = buttons.some(function (b) { return getButtonText(b) === 'cm'; }) && buttons.some(function (b) { return getButtonText(b) === 'pol'; });
     if (!hasWeight && !hasHeight) return;
-    var isTargetWeight = /eeed7a15/.test(pathname);
+    var isTargetWeight = /eeed7a15/.test(getPathname());
     var config = hasHeight
       ? { key: 'quizHeight', unitKey: 'quizHeightUnit', min: 130, max: 210, value: 150, unit: 'cm', altUnit: 'pol', helper: 'Arraste para selecionar a sua altura' }
       : { key: isTargetWeight ? 'quizTargetWeight' : 'quizWeight', unitKey: isTargetWeight ? 'quizTargetWeightUnit' : 'quizWeightUnit', min: 45, max: 140, value: 75, unit: 'kg', altUnit: 'lb', helper: 'Arraste para selecionar o seu peso' };
@@ -217,9 +222,9 @@
         event.stopPropagation();
         unit = button.getAttribute('data-quiz-unit');
         render();
-      }, true);
+      }, clickListenerOptions);
     });
-    window.addEventListener('resize', render);
+    window.addEventListener('resize', render, resizeListenerOptions);
     render();
   }
 
@@ -231,7 +236,7 @@
     });
   }
   function installAmandaVideo() {
-    if (!/cf5e589e/.test(pathname)) return;
+    if (!/cf5e589e/.test(getPathname())) return;
     document.querySelectorAll('.quiz-video-card').forEach(function (node) { node.remove(); });
     var main = document.querySelector('main') || document.body;
     hideBrokenVideoBlocks(main);
@@ -247,7 +252,7 @@
   }
 
   function installFinalVideo() {
-    if (!/f01fe99f/.test(pathname)) return;
+    if (!/f01fe99f/.test(getPathname())) return;
     document.querySelectorAll('.quiz-video-card, .quiz-final-choice').forEach(function (node) { node.remove(); });
     var main = document.querySelector('main') || document.body;
     hideBrokenVideoBlocks(main);
@@ -274,7 +279,7 @@
   }
 
   function decorateComparisonChoice() {
-    if (!/ecb52128/.test(pathname)) return;
+    if (!/ecb52128/.test(getPathname())) return;
     var dream = sessionStorage.getItem('quizDream');
     if (!dream || document.querySelector('.quiz-final-choice')) return;
     var main = document.querySelector('main') || document.body;
@@ -321,7 +326,7 @@
   }
 
   function animateBmiCircle() {
-    if (!/0def5fca/.test(pathname)) return;
+    if (!/0def5fca/.test(getPathname())) return;
     var fills = Array.prototype.slice.call(document.querySelectorAll('div')).filter(function (node) {
       return (window.getComputedStyle(node).backgroundImage || '').indexOf('conic-gradient') !== -1;
     });
@@ -369,7 +374,7 @@
         event.preventDefault();
         setTimeout(function () { goToNext(button); }, 120);
       }
-    }, true);
+    }, clickListenerOptions);
   }
 
   document.documentElement.classList.add('quiz-step-entering');
